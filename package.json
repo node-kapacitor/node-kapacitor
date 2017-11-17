@@ -1,0 +1,43 @@
+{
+  "name": "kapacitor",
+  "version": "0.1.0",
+  "description": "Kapacitor Client",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/node-kapacitor/node-kapacitor.git"
+  },
+  "keywords": [
+    "influx",
+    "kapacitor",
+    "time",
+    "series",
+    "client"
+  ],
+  "contributors": [
+    "Longqi Zhuo <zlq4863947@gmail.com> "
+  ],
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "scripts": {
+    "tsc": "rm -rf dist; tsc -p tsconfig.development.json",
+    "tslint": "tslint --project ./tslint.json",
+    "test": "mocha dist/**/*.test.js --timeout 10000 --require intelli-espower-loader",
+    "prepare": "rm -rf dist; tsc -p tsconfig.json"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/config": "0.0.32",
+    "@types/mocha": "^2.2.41",
+    "@types/node": "^8.0.47",
+    "@types/power-assert": "^1.4.29",
+    "esdoc": "^0.4.8",
+    "config": "^1.26.1",
+    "intelli-espower-loader": "^1.0.1",
+    "mocha": "^3.5.0",
+    "power-assert": "^1.4.4",
+    "ts-node": "^3.3.0",
+    "tslint": "^5.6.0",
+    "typescript": "^2.4.2"
+  }
+}
