@@ -25,7 +25,6 @@
     "test": "mocha dist/**/*.test.js --timeout 10000 --require intelli-espower-loader",
     "prepare": "rm -rf dist; tsc -p tsconfig.json"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/config": "0.0.32",
     "@types/mocha": "^2.2.41",

@@ -192,7 +192,7 @@ function nanoIsoToTime(iso: string): string {
   const seconds = Math.floor(new Date(secondsStr).getTime() / 1000);
   return `${seconds}${decimalStr}`;
 }
-class NanoDate extends Date{ 
+class NanoDate extends Date { 
   private cachedNanoISO: string;
   private cachedNanoTime: string;
   private nanoISO: string;

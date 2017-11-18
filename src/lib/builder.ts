@@ -187,7 +187,7 @@ export class Expression implements IExpressionHead, IExpressionTail, IBinaryOp {
         this.query.push(value);
         return this;
       case 'string':
-        this.query.push(escape.stringLit(value));
+      //  this.query.push(escape.stringLit(value));
         return this;
       case 'boolean':
         this.query.push(value ? 'TRUE' : 'FALSE');

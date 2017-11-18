@@ -3,6 +3,8 @@ import * as url from 'url';
 
 import * as b from './builder';
 import * as grammar from './grammar';
+import { ITask, IUpdateTask } from './grammar';
+
 import { IPingStats, IPoolOptions, Pool } from './pool';
 import { assertNoErrors, IResults} from './results';
 import { coerceBadly, ISchemaOptions, Schema } from './schema';
@@ -14,7 +16,7 @@ const defaultHost: IHostConfig = Object.freeze({
 });
 
 export * from './builder';
-export { INanoDate, FieldType, Precision, Raw, TimePrecision, escape, toNanoDate, ITask } from './grammar';
+export { INanoDate, FieldType, Precision, Raw, TimePrecision, escape, toNanoDate, ITask, IUpdateTask, dashToCamel } from './grammar';
 export { ISchemaOptions } from './schema';
 export { IPingStats, IPoolOptions } from './pool';
 export { IResults, IResponse, ResultError } from './results';
@@ -41,7 +43,6 @@ export interface IHostConfig {
 
 }
 
-
 export interface ISingleHostConfig extends IHostConfig {
   /**
    * Settings for the connection pool.
@@ -59,20 +60,6 @@ export interface IClusterConfig {
    * Settings for the connection pool.
    */
   pool?: IPoolOptions;
-}
-
-/**
- * IRetentionOptions are passed into passed into the {@link
- * InfluxDB#createRetentionPolicy} and {@link InfluxDB#alterRetentionPolicy}.
- * See the [Downsampling and Retention page](https://docs.influxdata.com/
- * influxdb/v1.0/guides/downsampling_and_retention/) on the Influx docs for
- * more information.
- */
-export interface IRetentionOptions {
-  database?: string;
-  duration: string;
-  replication: number;
-  isDefault?: boolean;
 }
 
 /**
@@ -106,7 +93,7 @@ function defaults<T>(target: any, ...srcs: any[]): T {
 }
 
 /**
- * InfluxDB is the public interface to run queries against the your database.
+ * Kapacitor is the public interface to run queries against the your database.
  * This is a 'driver-level' module, not a a full-fleged ORM or ODM; you run
  * queries directly by calling methods on this class.
  *
@@ -114,7 +101,7 @@ function defaults<T>(target: any, ...srcs: any[]): T {
  * if you want help getting started!
  *
  * @example
- * const Influx = require('influx');
+ * const Influx = require('kapacitor');
  * const influx = new Influx.InfluxDB({
  *  host: 'localhost',
  *  database: 'express_response_db',
@@ -162,12 +149,6 @@ export class Kapacitor {
    * @private
    */
   private options: IClusterConfig;
-
-  /**
-   * Map of Schema instances defining measurements in Influx.
-   * @private
-   */
-  private schema: { [db: string]: { [measurement: string]: Schema } } = Object.create(null);
 
   constructor(options: ISingleHostConfig);
 
@@ -263,12 +244,8 @@ export class Kapacitor {
     }
     if (!options.hasOwnProperty('hosts')) { // ISingleHostConfig => IClusterConfig
       options = {
-        database: options.database,
         hosts: [options],
-        password: options.password,
-        pool: options.pool,
-        schema: options.schema,
-        username: options.username,
+        pool: options.pool
       };
     }
 
@@ -289,7 +266,7 @@ export class Kapacitor {
       this.pool.addHost(`${host.protocol}://${host.host}:${host.port}`, host.options);
     });
   }
-
+  
   /**
    * Creates a new task.
    * @param {ITask} task
@@ -299,7 +276,7 @@ export class Kapacitor {
    *   id: 'test_kapa',
    *   type: 'stream',
    *   dbrps: [{ db: 'test', rp: 'autogen' }],
-   *   script: 'stream\n    |from()\n        .measurement(\'tick\')\n',
+   *   script: 'stream\n    |from()\n        .measurement("tick")\n',
    *   vars: {
    *     var1: {
    *       value: 42,
@@ -309,21 +286,49 @@ export class Kapacitor {
    * });
    */
   public createTask(task: grammar.ITask): Promise<any> {
+    if (task.script) { 
+      task.script = grammar.escape.quoted(task.script);
+    }
+    
     return this.pool.json(this.getRequestOpts({
       method: 'POST',
       path: 'tasks',
       body: JSON.stringify(task)
     })).then(assertNoErrors);
   }
+
+  /**
+   * Update a task with the provided task id.
+   * @param {IUpdateTask} task
+   * @return {Promise.<any>}
+   * @example
+   * kapacitor.updateTask({
+   *   id: 'test_kapa',
+   *   status: 'enabled'
+   * });
+   */
+  public updateTask(task: IUpdateTask): Promise<any> {
+    if (task.script) { 
+      task.script = grammar.escape.quoted(task.script);
+    }
+    const taskId = task.id;
+    delete task.id;
+    
+    return this.pool.json(this.getRequestOpts({
+      method: 'PATCH',
+      path: 'tasks/' + taskId,
+      body: JSON.stringify(task)
+    })).then(assertNoErrors);
+  }
   
   /**
-   * drop a task with the provided task id.
+   * remove a task with the provided task id.
    * @param {string} taskId
    * @return {Promise.<void>}
    * @example
-   * kapacitor.dropTask('test_kapa');
+   * kapacitor.removeTask('test_kapa');
    */
-  public async dropTask(taskId: string): Promise<void> {
+  public async removeTask(taskId: string): Promise<void> {
     const res = await this.pool.json(this.getRequestOpts({
       method: 'DELETE',
       path: 'tasks/' + taskId
@@ -332,42 +337,64 @@ export class Kapacitor {
   }
   
   /**
-   * Returns array of tasks.
-   * returns the results in a friendly format, {@link IResults}.
-   * @param {String} [database] the database the measurement lives in, optional
-   *     if a default database is provided.
-   * @param {String|String[]} query
-   * @param {IQueryOptions} [options]
+   * Return a task.
+   * returns the results in a friendly format, {@link ITask}.
+   * @param {String} taskId the task id.
+   * @param {ITaskOptions} [query]
    * @return {Promise<IResults|Results[]>} result(s)
    * @example
-   * influx.query('select * from perf').then(results => {
+   * kapacitor.getTask(taskId, {dotView: 'labels'}).then(results => {
    *   console.log(results)
    * })
    */
-  public async getTasks(taskId: string): Promise<void> {
-    const res = await this.pool.json(this.getRequestOpts({
-      method: 'DELETE',
-      path: 'tasks/' + taskId
-    }));
-    assertNoErrors(res);
+  public async getTask(taskId: string, query?: grammar.ITaskOptions): Promise<grammar.ITask> {
+    if (query) {
+      query.dotView = query.dotView ? query.dotView : 'attributes';
+      query.scriptFormat = query.scriptFormat ? query.scriptFormat : 'formatted';
+    }
+    return this.pool.json(this.getRequestOpts({
+      path: 'tasks/' + taskId,
+      query: query ? grammar.camelToDash(query) : undefined
+    })).then(assertNoErrors);
+  }
+  
+  /**
+   * Return a array of tasks.
+   * returns the results in a friendly format, {@link ITasks}.
+   * @param {ITaskOptions} [query]
+   * @return {Promise<IResults|Results[]>} result(s)
+   * @example
+   * kapacitor.getTasks({dotView: 'labels'}).then(results => {
+   *   console.log(results)
+   * })
+   */
+  public async getTasks(query?: grammar.IListTasksOptions): Promise<grammar.ITasks> {
+    if (query) {
+      query.dotView = query.dotView ? query.dotView : 'attributes';
+      query.scriptFormat = query.scriptFormat ? query.scriptFormat : 'formatted';
+      query.offset = query.offset ? query.offset : 0;
+      query.limit = query.limit ? query.limit : 100;
+    }
+    return <Promise<grammar.ITasks>>this.pool.json(this.getRequestOpts({
+      path: 'tasks',
+      query: query ? grammar.camelToDash(query) : undefined
+    })).then(assertNoErrors);
   }
 
-  
   /**
    * Creates options to be passed into the pool to request kapacitor.
    * @private
    */
   private getRequestOpts(opt: {
-    method: string,
     path: string,
+    method?: string,
     body?: string,
     query?: string
   }): any {
-    return {
-      method: opt.method,
-      path: url.resolve('/kapacitor/v1/', opt.path),
-      body: opt.body,
-      query: opt.query
-    };
+    return Object.assign({
+      method: 'GET'
+    }, opt ,{
+      path: url.resolve('/kapacitor/v1/', opt.path)
+    });
   }
 }
