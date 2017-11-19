@@ -76,7 +76,7 @@ export interface IPoolRequestOptions {
  * An ServiceNotAvailableError is returned as an error from requests that
  * result in a > 500 error code.
  */
-export class ServiceNotAvailableError extends Error {
+class ServiceNotAvailableError extends Error {
   constructor(message: string) {
     super();
     this.message = message;
@@ -88,7 +88,7 @@ export class ServiceNotAvailableError extends Error {
  * An RequestError is returned as an error from requests that
  * result in a 300 <= error code <= 500.
  */
-export class RequestError extends Error {
+class RequestError extends Error {
 
   public static Create(
     req: http.ClientRequest,
@@ -279,7 +279,7 @@ export class Pool {
    * Ping sends out a request to all available Influx servers, reporting on
    * their response time and version number.
    */
-  public ping(timeout: number, path: string = '/ping'): Promise<IPingStats[]> {
+  public ping(timeout: number, path: string = '/kapacitor/v1/ping'): Promise<IPingStats[]> {
     const todo: Promise<IPingStats>[] = [];
 
     setToArray(this.hostsAvailable)

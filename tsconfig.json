@@ -10,6 +10,24 @@
     "outDir": "./dist",
     "declaration": true
   },
+  "typedocOptions": {
+    "name": "node-kapacitor",
+    "mode": "file",
+    "out": "docs",
+    "exclude": "test",
+    "theme": "default",
+    "ignoreCompilerErrors": true,
+    "excludePrivate": true,
+    "excludeNotExported": true,
+    "target": "ES2016",
+    "moduleResolution": "node",
+    "preserveConstEnums": true,
+    "stripInternal": true,
+    "suppressExcessPropertyErrors": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "module": "commonjs",
+    "readme": "./README.md"
+  },
   "include": ["./src/**/*.ts"],
   "exclude": ["node_modules"]
 }

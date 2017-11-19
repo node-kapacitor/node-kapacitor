@@ -1,5 +1,5 @@
 import * as assert from 'power-assert';
-import { Kapacitor, ITask, IUpdateTask, dashToCamel } from './kapacitor';
+import { Kapacitor, ITask, IUpdateTask, ITemplate, IUpdateTemplate, IPingStats, ConfigUpdateAction } from './kapacitor';
 
 const kapacitor = new Kapacitor();
 
@@ -8,7 +8,9 @@ const testCreateTask = async () => {
     id: 'test_kapa',
     type: 'stream',
     dbrps: [{ db: 'test', rp: 'autogen' }],
-    script: 'stream\n    |from()\n        .measurement("tick")\n',
+    script: `stream
+              |from()
+                .measurement("tick")`,
     vars: {
       var1: {
         value: 42,
@@ -52,10 +54,135 @@ const testGetTasks = async () => {
   console.log(JSON.stringify(res, null, 2));
 };
 
+const testCreateTemplate = async () => {
+  const template: ITemplate = {
+    id: 'test_template',
+    type: 'stream',
+    script: `
+      // Which measurement to consume
+      var measurement string
+      // Optional where filter
+      var where_filter = lambda: TRUE
+      // Optional list of group by dimensions
+      var groups = [*]
+      // Which field to process
+      var field string
+      // Warning criteria, has access to 'mean' field
+      var warn lambda
+      // Critical criteria, has access to 'mean' field
+      var crit lambda
+      // How much data to window
+      var window = 5m
+      // The slack channel for alerts
+      var slack_channel = '#alerts'
+      
+      stream
+          |from()
+              .measurement(measurement)
+              .where(where_filter)
+              .groupBy(groups)
+          |window()
+              .period(window)
+              .every(window)
+          |mean(field)
+          |alert()
+              .warn(warn)
+              .crit(crit)
+              .slack()
+              .channel(slack_channel)
+    `,
+    vars: {
+      var1: {
+        value: 42,
+        type: 'float'
+      }
+    }
+  };
+  const res = await kapacitor.createTemplate(template);
+  console.log(res);
+};
+
+const testGetTemplate = async () => {
+  const tmplId = 'test_template';
+  let res = await kapacitor.getTemplate(tmplId);
+  assert(res.id === tmplId);
+  res = await kapacitor.getTemplate(tmplId, {scriptFormat: 'raw'})
+  console.log(res.dot);
+};
+
+const testUpdateTemplate = async () => {
+  const tmpl: IUpdateTemplate = {
+    id: 'test_template',
+    status: 'enabled'
+  };
+  const res = await kapacitor.updateTemplate(tmpl);
+  console.log(res.modified);
+  // console.log(res);
+};
+
+const testRemoveTemplate = async () => {
+  await kapacitor.removeTemplate('test_template');
+};
+
+const testGetTemplates = async () => {
+  let res = await kapacitor.getTemplates();
+  assert(res.templates);
+  res = await kapacitor.getTemplates({
+    scriptFormat: 'raw',
+    limit: 5
+  })
+  console.log(JSON.stringify(res, null, 2));
+};
+
+const testPing = async () => {
+  const res: IPingStats[] = await kapacitor.ping(3000);
+  assert(res.length > 0);
+  assert(res[0].online);
+  console.log('version: ', res[0].version);
+};
+
+const testGetConfig = async () => {
+  let res = await kapacitor.getConfig();
+  assert(res['link']['href'] === '/kapacitor/v1/config');
+  res = await kapacitor.getConfig('influxdb');
+  assert(res['link']['href'] === '/kapacitor/v1/config/influxdb');
+  res = await kapacitor.getConfig('influxdb', 'default');
+  assert(res['link']['href'] === '/kapacitor/v1/config/influxdb/default');
+};
+
+const testUpdateConfig = async () => {
+
+  let influxdb = await kapacitor.getConfig('influxdb', 'default');
+  const disableSubscriptions = influxdb['options']['disable-subscriptions'];
+  console.log('disable-subscriptions: ', disableSubscriptions);
+  const action: ConfigUpdateAction = {
+    set: {
+      'disable-subscriptions' : !disableSubscriptions
+    }
+  };
+  await kapacitor.updateConfig(action, 'influxdb', 'default');
+  
+  influxdb = await kapacitor.getConfig('influxdb', 'default');
+  const disableSubscriptions2 = influxdb['options']['disable-subscriptions'];
+  console.log('disable-disableSubscriptions2: ', disableSubscriptions2);
+  assert( disableSubscriptions2 === !disableSubscriptions);
+};
+
 describe('test kapacitor', () => {
   it('should create task', testCreateTask);
   it('should get task', testGetTask);
   it('should update task', testUpdateTask);
   it('should remove task', testRemoveTask);
   it('should get all task', testGetTasks);
+  
+  it('should create template', testCreateTemplate);
+  it('should get template', testGetTemplate);
+  it('should update template', testUpdateTemplate);
+  it('should remove template', testRemoveTemplate);
+  it('should get all template', testGetTemplates);
+  
+  it('should test ping', testPing);
+
+  it('should get config', testGetConfig);
+  it('should update config', testUpdateConfig);
 });

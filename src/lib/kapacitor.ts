@@ -1,13 +1,10 @@
 import { RequestOptions } from 'https';
 import * as url from 'url';
 
-import * as b from './builder';
-import * as grammar from './grammar';
-import { ITask, IUpdateTask } from './grammar';
-
+import { ITask, IUpdateTask, ITaskOptions, ITasks, ITemplate, escape, camelToDash } from './grammar';
+import { IListTasksOptions, ITemplateOptions, IListTemplatesOptions, ITemplates } from './grammar';
 import { IPingStats, IPoolOptions, Pool } from './pool';
-import { assertNoErrors, IResults} from './results';
-import { coerceBadly, ISchemaOptions, Schema } from './schema';
+import { assertNoErrors} from './results';
 
 const defaultHost: IHostConfig = Object.freeze({
   host: '127.0.0.1',
@@ -15,11 +12,32 @@ const defaultHost: IHostConfig = Object.freeze({
   protocol: <'http'> 'http',
 });
 
-export * from './builder';
-export { INanoDate, FieldType, Precision, Raw, TimePrecision, escape, toNanoDate, ITask, IUpdateTask, dashToCamel } from './grammar';
-export { ISchemaOptions } from './schema';
+export * from  './grammar';
 export { IPingStats, IPoolOptions } from './pool';
-export { IResults, IResponse, ResultError } from './results';
+export { IResponse, ResultError } from './results';
+
+export interface ConfigUpdateAction {
+  /**
+   * Set the value in the configuration overrides.
+   */
+  set?: {
+    [Attr: string]: any
+  },
+  /**
+   * Delete the value from the configuration overrides.
+   */
+  delete?: string[],
+  /**
+   * Add a new element to a list configuration section.
+   */
+  add?: {
+    [Attr: string]: any
+  },
+  /**
+   * Remove a previously added element from a list configuration section.
+   */
+  remove?: string[]
+}
 
 export interface IHostConfig {
 
@@ -101,40 +119,17 @@ function defaults<T>(target: any, ...srcs: any[]): T {
  * if you want help getting started!
  *
  * @example
- * const Influx = require('kapacitor');
- * const influx = new Influx.InfluxDB({
- *  host: 'localhost',
- *  database: 'express_response_db',
- *  schema: [
- *    {
- *      measurement: 'response_times',
- *      fields: {
- *        path: Influx.FieldType.STRING,
- *        duration: Influx.FieldType.INTEGER
- *      },
- *      tags: [
- *        'host'
- *      ]
- *    }
- *  ]
+ * ```typescript
+ * 
+ * import { Kapacitor } from 'kapacitor';
+ * const kapacitor = new Kapacitor({
+ *  host: 'localhost'
  * })
  *
- * influx.writePoints([
- *   {
- *     measurement: 'response_times',
- *     tags: { host: os.hostname() },
- *     fields: { duration, path: req.path },
- *   }
- * ]).then(() => {
- *   return influx.query(`
- *     select * from response_times
- *     where host = ${Influx.escape.stringLit(os.hostname())}
- *     order by time desc
- *     limit 10
- *   `)
- * }).then(rows => {
- *   rows.forEach(row => console.log(`A request to ${row.path} took ${row.duration}ms`))
+ * kapacitor.getTasks().then(res => {
+ * console.log(JSON.stringify(res, null, 2));
  * })
+ * ``` 
  */
 export class Kapacitor {
 
@@ -150,90 +145,72 @@ export class Kapacitor {
    */
   private options: IClusterConfig;
 
+  /**
+   * Connect to a single Kapacitor instance by specifying
+   * a set of connection options.
+   */
   constructor(options: ISingleHostConfig);
 
   /**
-   * Connect to an InfluxDB cluster by specifying a
+   * Connect to an Kapacitor cluster by specifying a
    * set of connection options.
    */
   constructor(options: IClusterConfig);
 
   /**
-   * Connect to an InfluxDB instance using a configuration URL.
+   * Connect to an Kapacitor instance using a configuration URL.
    * @example
-   * new InfluxDB('http://user:password@host:8086/database')
+   * ```typescript
+   * 
+   * new Kapacitor('http://user:password@host:9092/')
+   * ```
    */
   constructor(url: string);
 
   /**
-   * Connects to a local, default Influx instance.
+   * Connects to a local, default kapacitor instance.
    */
   constructor();
 
   /**
-   * Connect to a single InfluxDB instance by specifying
+   * Connect to a single Kapacitor instance by specifying
    * a set of connection options.
-   * @param {IClusterConfig|ISingleHostConfig|string} [options='http://root:root@127.0.0.1:8086']
+   * @param {IClusterConfig|ISingleHostConfig|string} [options='http://root:root@127.0.0.1:9092']
    *
    * @example
-   * const Influx = require('influx')
+   * ```typescript
+   * 
+   * import { Kapacitor } from 'kapacitor';
    *
    * // Connect to a single host with a DSN:
-   * const influx = new Influx.InfluxDB('http://user:password@host:8086/database')
+   * new Kapacitor('http://user:password@host:9092/')
+   * ```
    *
    * @example
-   * const Influx = require('influx')
+   * ```typescript
+   * 
+   * import { Kapacitor } from 'kapacitor';
    *
-   * // Connect to a single host with a full set of config details and
-   * // a custom schema
-   * const client = new Influx.InfluxDB({
-   *   database: 'my_db',
+   * // Connect to a single host with a full set of config details
+   * const client = new Kapacitor({
    *   host: 'localhost',
-   *   port: 8086,
-   *   username: 'connor',
-   *   password: 'pa$$w0rd',
-   *   schema: [
-   *     {
-   *       measurement: 'perf',
-   *       fields: {
-   *         memory_usage: Influx.FieldType.INTEGER,
-   *         cpu_usage: Influx.FieldType.FLOAT,
-   *         is_online: Influx.FieldType.BOOLEAN
-   *       }
-   *       tags: [
-   *         'hostname'
-   *       ]
-   *     }
-   *   ]
+   *   port: 8086
    * })
+   * ```
    *
    * @example
-   * const Influx = require('influx')
+   * ```typescript
+   * 
+   * import { Kapacitor } from 'kapacitor';
    *
    * // Use a pool of several host connections and balance queries across them:
-   * const client = new Influx.InfluxDB({
-   *   database: 'my_db',
-   *   username: 'connor',
-   *   password: 'pa$$w0rd',
+   * const client = new Influx.Kapacitor({
    *   hosts: [
    *     { host: 'db1.example.com' },
    *     { host: 'db2.example.com' },
-   *   ],
-   *   schema: [
-   *     {
-   *       measurement: 'perf',
-   *       fields: {
-   *         memory_usage: Influx.FieldType.INTEGER,
-   *         cpu_usage: Influx.FieldType.FLOAT,
-   *         is_online: Influx.FieldType.BOOLEAN
-   *       }
-   *       tags: [
-   *         'hostname'
-   *       ]
-   *     }
    *   ]
    * })
-   *
+   * ```
    */
   constructor (options?: any) {
     // Figure out how to parse whatever we were passed in into a IClusterConfig.
@@ -268,10 +245,34 @@ export class Kapacitor {
   }
   
   /**
+   * Pings all available hosts, collecting online status and version info.
+   * @param  {Number}               timeout Given in milliseconds
+   * @return {Promise<IPingStats[]>}
+   * @example
+   * ```typescript
+   * 
+   * kapacitor.ping(5000).then(hosts => {
+   *   hosts.forEach(host => {
+   *     if (host.online) {
+   *       console.log(`${host.url.host} responded in ${host.rtt}ms running ${host.version})`)
+   *     } else {
+   *       console.log(`${host.url.host} is offline :(`)
+   *     }
+   *   })
+   * })
+   * ```
+   */
+  public ping(timeout: number): Promise<IPingStats[]> {
+    return this.pool.ping(timeout);
+  }  
+
+  /**
    * Creates a new task.
    * @param {ITask} task
    * @return {Promise.<any>}
    * @example
+   * ```typescript
+   * 
    * kapacitor.createTask({
    *   id: 'test_kapa',
    *   type: 'stream',
@@ -284,10 +285,11 @@ export class Kapacitor {
    *     }
    *   }
    * });
+   * ```
    */
-  public createTask(task: grammar.ITask): Promise<any> {
-    if (task.script) { 
-      task.script = grammar.escape.quoted(task.script);
+  public createTask(task: ITask): Promise<ITask> {
+    if (task.script) {
+      task.script = escape.quoted(task.script);
     }
     
     return this.pool.json(this.getRequestOpts({
@@ -296,20 +298,88 @@ export class Kapacitor {
       body: JSON.stringify(task)
     })).then(assertNoErrors);
   }
+  
+  /**
+   * Creates a new template.
+   * @param {ITemplate} template
+   * @return {Promise.<any>}
+   * @example
+   * ```typescript
+   * 
+   * kapacitor.createTemplate({
+   *   id: 'test_kapa',
+   *   type: 'stream',
+   *   dbrps: [{ db: 'test', rp: 'autogen' }],
+   *   script: `
+   *     // Which measurement to consume
+   *     var measurement string
+   *     // Optional where filter
+   *     var where_filter = lambda: TRUE
+   *     // Optional list of group by dimensions
+   *     var groups = [*]
+   *     // Which field to process
+   *     var field string
+   *     // Warning criteria, has access to 'mean' field
+   *     var warn lambda
+   *     // Critical criteria, has access to 'mean' field
+   *     var crit lambda
+   *     // How much data to window
+   *     var window = 5m
+   *     // The slack channel for alerts
+   *     var slack_channel = '#alerts'
+   *     
+   *     stream
+   *         |from()
+   *             .measurement(measurement)
+   *             .where(where_filter)
+   *             .groupBy(groups)
+   *         |window()
+   *             .period(window)
+   *             .every(window)
+   *         |mean(field)
+   *         |alert()
+   *             .warn(warn)
+   *             .crit(crit)
+   *             .slack()
+   *             .channel(slack_channel)
+   *   `,
+   *   vars: {
+   *     var1: {
+   *       value: 42,
+   *       type: 'float'
+   *     }
+   *   }
+   * });
+   * ```
+   */
+  public createTemplate(template: ITemplate): Promise<ITemplate> {
+    if (template.script) { 
+      template.script = escape.quoted(template.script);
+    }
+    
+    return this.pool.json(this.getRequestOpts({
+      method: 'POST',
+      path: 'templates',
+      body: JSON.stringify(template)
+    })).then(assertNoErrors);
+  }
 
   /**
    * Update a task with the provided task id.
    * @param {IUpdateTask} task
    * @return {Promise.<any>}
    * @example
+   * ```typescript
+   * 
    * kapacitor.updateTask({
    *   id: 'test_kapa',
    *   status: 'enabled'
    * });
+   * ```
    */
-  public updateTask(task: IUpdateTask): Promise<any> {
+  public updateTask(task: IUpdateTask): Promise<ITask> {
     if (task.script) { 
-      task.script = grammar.escape.quoted(task.script);
+      task.script = escape.quoted(task.script);
     }
     const taskId = task.id;
     delete task.id;
@@ -322,16 +392,64 @@ export class Kapacitor {
   }
   
   /**
+   * Update a template with the provided template id.
+   * @param {ITemplate} template
+   * @return {Promise.<any>}
+   * @example
+   * ```typescript
+   * 
+   * kapacitor.updateTemplate({
+   *   id: 'test_template',
+   *   status: 'enabled'
+   * });
+   * ```
+   */
+  public updateTemplate(template: ITemplate): Promise<ITemplate> {
+    if (template.script) { 
+      template.script = escape.quoted(template.script);
+    }
+    const templateId = template.id;
+    delete template.id;
+    
+    return this.pool.json(this.getRequestOpts({
+      method: 'PATCH',
+      path: 'templates/' + templateId,
+      body: JSON.stringify(template)
+    })).then(assertNoErrors);
+  }
+  
+  /**
    * remove a task with the provided task id.
    * @param {string} taskId
    * @return {Promise.<void>}
    * @example
+   * ```typescript
+   * 
    * kapacitor.removeTask('test_kapa');
+   * ```
    */
   public async removeTask(taskId: string): Promise<void> {
     const res = await this.pool.json(this.getRequestOpts({
       method: 'DELETE',
       path: 'tasks/' + taskId
+    }));
+    assertNoErrors(res);
+  }
+  
+  /**
+   * remove a template with the provided template id.
+   * @param {string} templateId
+   * @return {Promise.<void>}
+   * @example
+   * ```typescript
+   * 
+   * kapacitor.removeTemplate('test_template');
+   * ```
+   */
+  public async removeTemplate(templateId: string): Promise<void> {
+    const res = await this.pool.json(this.getRequestOpts({
+      method: 'DELETE',
+      path: 'templates/' + templateId
     }));
     assertNoErrors(res);
   }
@@ -343,41 +461,139 @@ export class Kapacitor {
    * @param {ITaskOptions} [query]
    * @return {Promise<IResults|Results[]>} result(s)
    * @example
+   * ```typescript
+   * 
    * kapacitor.getTask(taskId, {dotView: 'labels'}).then(results => {
    *   console.log(results)
    * })
+   * ```
    */
-  public async getTask(taskId: string, query?: grammar.ITaskOptions): Promise<grammar.ITask> {
+  public getTask(taskId: string, query?: ITaskOptions): Promise<ITask> {
     if (query) {
       query.dotView = query.dotView ? query.dotView : 'attributes';
       query.scriptFormat = query.scriptFormat ? query.scriptFormat : 'formatted';
     }
     return this.pool.json(this.getRequestOpts({
       path: 'tasks/' + taskId,
-      query: query ? grammar.camelToDash(query) : undefined
+      query: query ? camelToDash(query) : undefined
+    })).then(assertNoErrors);
+  }
+  
+  /**
+   * Return a template.
+   * returns the results in a friendly format, {@link ITemplate}.
+   * @param {String} templateId the template id.
+   * @param {ITemplateOptions} [query]
+   * @return {Promise<IResults|Results[]>} result(s)
+   * @example
+   * ```typescript
+   * 
+   * kapacitor.getTemplate(tmplId, {scriptFormat: 'raw'}).then(results => {
+   *   console.log(results)
+   * })
+   * ```
+   */
+  public getTemplate(templateId: string, query?: ITemplateOptions): Promise<ITemplate> {
+    if (query) {
+      query.scriptFormat = query.scriptFormat ? query.scriptFormat : 'formatted';
+    }
+    return this.pool.json(this.getRequestOpts({
+      path: 'templates/' + templateId,
+      query: query ? camelToDash(query) : undefined
     })).then(assertNoErrors);
   }
   
   /**
    * Return a array of tasks.
    * returns the results in a friendly format, {@link ITasks}.
-   * @param {ITaskOptions} [query]
+   * @param {IListTasksOptions} [query]
    * @return {Promise<IResults|Results[]>} result(s)
    * @example
+   * ```typescript
+   * 
    * kapacitor.getTasks({dotView: 'labels'}).then(results => {
    *   console.log(results)
    * })
+   * ```
    */
-  public async getTasks(query?: grammar.IListTasksOptions): Promise<grammar.ITasks> {
+  public getTasks(query?: IListTasksOptions): Promise<ITasks> {
     if (query) {
       query.dotView = query.dotView ? query.dotView : 'attributes';
       query.scriptFormat = query.scriptFormat ? query.scriptFormat : 'formatted';
       query.offset = query.offset ? query.offset : 0;
       query.limit = query.limit ? query.limit : 100;
     }
-    return <Promise<grammar.ITasks>>this.pool.json(this.getRequestOpts({
+    return <Promise<ITasks>>this.pool.json(this.getRequestOpts({
       path: 'tasks',
-      query: query ? grammar.camelToDash(query) : undefined
+      query: query ? camelToDash(query) : undefined
+    })).then(assertNoErrors);
+  }
+  
+  /**
+   * Return a array of template.
+   * returns the results in a friendly format, {@link ITemplates}.
+   * @param {IListTemplatesOptions} [query]
+   * @return {Promise<ITemplates>} result(s)
+   * @example
+   * ```typescript
+   * 
+   * kapacitor.getTemplates({dotView: 'labels'}).then(results => {
+   *   console.log(results)
+   * })
+   * ```
+   */
+  public getTemplates(query?: IListTemplatesOptions): Promise<ITemplates> {
+    if (query) {
+      query.scriptFormat = query.scriptFormat ? query.scriptFormat : 'formatted';
+      query.offset = query.offset ? query.offset : 0;
+      query.limit = query.limit ? query.limit : 100;
+    }
+    return <Promise<ITemplates>>this.pool.json(this.getRequestOpts({
+      path: 'templates',
+      query: query ? camelToDash(query) : undefined
+    })).then(assertNoErrors);
+  }
+  
+  /**
+   * Update config.
+   * @param {ConfigUpdateAction} action
+   * @param {string} section
+   * @param {string} [element]
+   * @return {Promise.<void>}
+   * @example
+   * ```typescript
+   * 
+   * kapacitor.updateConfig({
+   *  set: {
+   *    'disable-subscriptions' : !disableSubscriptions
+   *  }
+   * }, 'influxdb', 'default');
+   * ```
+   */
+  public async updateConfig(action: ConfigUpdateAction, section: string, element?: string): Promise<void> {
+    await this.pool.json(this.getRequestOpts({
+      method: 'POST',
+      path: 'config/' + section + (element ? '/' + element : ''),
+      body: JSON.stringify(action)
+    })).then(assertNoErrors);
+  }
+  /**
+   * Get config.
+   * @param {string} [section]
+   * @param {string} [element]
+   * @return {Promise<any>} result
+   * @example
+   * ```typescript
+   * 
+   * kapacitor.getConfig('influxdb', 'default').then(results => {
+   *   console.log(results)
+   * })
+   * ```
+   */
+  public getConfig(section?: string, element?: string): Promise<any> {
+    const path = 'config' + (section ? '/' + section : '') + (element ? '/' + element : '')
+    return this.pool.json(this.getRequestOpts({
+      path
     })).then(assertNoErrors);
   }
 

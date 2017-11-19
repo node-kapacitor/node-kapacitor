@@ -4,8 +4,11 @@
  * @property {function(s: string): string } quoted Escapes and wraps quoted values.
  *
  * @example
+ * ```typescript
+ * 
  * console.log(escape.quoted('stream\n    |from()\n        .measurement("tick")\n')); 
  * // => 'stream\n    |from()\n        .measurement('tick')\n'
+ * ```
  */
 export const escape = {
   /**
