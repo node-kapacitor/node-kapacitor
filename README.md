@@ -1,4 +1,6 @@
-# node-kapacitor
+<p align="center">
+  <img src="https://raw.github.com/node-kapacitor/node-kapacitor/master/logo.png?v3" alt="node-influx, an InfluxDB client for Node.js">
+</p>
 
 ## Installation
 
@@ -6,7 +8,7 @@ For Node, simply:
 
     $ npm install --save kapacitor
 
-Code reference [node-influx](https://github.com/node-influx/node-influx).
+Source Repo: [node-kapacitor](https://github.com/node-kapacitor/node-kapacitor) ,code reference [node-influx](https://github.com/node-influx/node-influx).
 
 ## Features
 
@@ -28,3 +30,7 @@ Code reference [node-influx](https://github.com/node-influx/node-influx).
 - [ ] Logs
 - [ ] Testing Services
 - [ ] Miscellaneous
+
+## Usage
+
+ * [API Documentation](https://node-kapacitor.github.io/classes/kapacitor.html)
