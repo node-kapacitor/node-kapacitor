@@ -1,11 +1,11 @@
 
 /**
- * A ResultError is thrown when a query generates errorful results from Influx.
+ * A ResultError is thrown when a query generates errorful results from Kapacitor.
  */
 export class ResultError extends Error {
   constructor(message: string) {
     super();
-    this.message = `Error from InfluxDB: ${message}`;
+    this.message = `Error from Kapacitor: ${message}`;
   }
 }
 

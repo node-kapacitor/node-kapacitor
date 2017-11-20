@@ -1,6 +1,6 @@
 {
   "name": "kapacitor",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Kapacitor Client",
   "repository": {
     "type": "git",
@@ -9,12 +9,13 @@
   "keywords": [
     "influx",
     "kapacitor",
+    "node-kapacitor",
     "time",
     "series",
     "client"
   ],
   "contributors": [
-    "Longqi Zhuo <zlq4863947@gmail.com> "
+    "Longqi Zhuo <zlq4863947@gmail.com>"
   ],
   "license": "MIT",
   "main": "dist/index.js",

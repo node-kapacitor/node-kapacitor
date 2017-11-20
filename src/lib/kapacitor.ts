@@ -42,11 +42,11 @@ export interface ConfigUpdateAction {
 export interface IHostConfig {
 
   /**
-   * Influx host to connect to, defaults to 127.0.0.1.
+   * Kapacitor host to connect to, defaults to 127.0.0.1.
    */
   host: string;
   /**
-   * Influx port to connect to, defaults to 8086.
+   * Kapacitor port to connect to, defaults to 9092.
    */
   port?: number;
   /**
@@ -111,13 +111,10 @@ function defaults<T>(target: any, ...srcs: any[]): T {
 }
 
 /**
- * Kapacitor is the public interface to run queries against the your database.
- * This is a 'driver-level' module, not a a full-fleged ORM or ODM; you run
- * queries directly by calling methods on this class.
- *
- * Please check out some of [the tutorials](https://node-influx.github.io/manual/tutorial.html)
- * if you want help getting started!
- *
+ * Kapacitor is an open source framework for processing, monitoring, 
+ * and alerting on time series data.</br>
+ * This is a 'driver-level' module, not a a full-fleged ORM or ODM.</br>
+ * you run queries directly by calling methods on this class.
  * @example
  * ```typescript
  * 
@@ -194,7 +191,7 @@ export class Kapacitor {
    * // Connect to a single host with a full set of config details
    * const client = new Kapacitor({
    *   host: 'localhost',
-   *   port: 8086
+   *   port: 9092
    * })
    * ```
    *
@@ -204,10 +201,10 @@ export class Kapacitor {
    * import { Kapacitor } from 'kapacitor';
    *
    * // Use a pool of several host connections and balance queries across them:
-   * const client = new Influx.Kapacitor({
+   * const client = new Kapacitor({
    *   hosts: [
-   *     { host: 'db1.example.com' },
-   *     { host: 'db2.example.com' },
+   *     { host: 'kapa1.example.com' },
+   *     { host: 'kapa2.example.com' },
    *   ]
    * })
    * ```
@@ -246,7 +243,7 @@ export class Kapacitor {
   
   /**
    * Pings all available hosts, collecting online status and version info.
-   * @param  {Number}               timeout Given in milliseconds
+   * @param  {Number} timeout Given in milliseconds
    * @return {Promise<IPingStats[]>}
    * @example
    * ```typescript
@@ -269,7 +266,7 @@ export class Kapacitor {
   /**
    * Creates a new task.
    * @param {ITask} task
-   * @return {Promise.<any>}
+   * @return {Promise.<ITask>}
    * @example
    * ```typescript
    * 
@@ -302,7 +299,7 @@ export class Kapacitor {
   /**
    * Creates a new template.
    * @param {ITemplate} template
-   * @return {Promise.<any>}
+   * @return {Promise.<ITemplate>}
    * @example
    * ```typescript
    * 
@@ -367,7 +364,7 @@ export class Kapacitor {
   /**
    * Update a task with the provided task id.
    * @param {IUpdateTask} task
-   * @return {Promise.<any>}
+   * @return {Promise.<ITask>}
    * @example
    * ```typescript
    * 
@@ -394,7 +391,7 @@ export class Kapacitor {
   /**
    * Update a template with the provided template id.
    * @param {ITemplate} template
-   * @return {Promise.<any>}
+   * @return {Promise.<ITemplate>}
    * @example
    * ```typescript
    * 
@@ -459,7 +456,7 @@ export class Kapacitor {
    * returns the results in a friendly format, {@link ITask}.
    * @param {String} taskId the task id.
    * @param {ITaskOptions} [query]
-   * @return {Promise<IResults|Results[]>} result(s)
+   * @return {Promise<ITask>} result
    * @example
    * ```typescript
    * 
@@ -484,7 +481,7 @@ export class Kapacitor {
    * returns the results in a friendly format, {@link ITemplate}.
    * @param {String} templateId the template id.
    * @param {ITemplateOptions} [query]
-   * @return {Promise<IResults|Results[]>} result(s)
+   * @return {Promise<ITemplate]>} result(s)
    * @example
    * ```typescript
    * 
@@ -507,7 +504,7 @@ export class Kapacitor {
    * Return a array of tasks.
    * returns the results in a friendly format, {@link ITasks}.
    * @param {IListTasksOptions} [query]
-   * @return {Promise<IResults|Results[]>} result(s)
+   * @return {Promise<ITasks>} result(s)
    * @example
    * ```typescript
    * 

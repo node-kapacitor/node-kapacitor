@@ -1,6 +1,8 @@
 <p align="center">
-  <img src="https://raw.github.com/node-kapacitor/node-kapacitor/master/logo.png?v3" alt="node-influx, an InfluxDB client for Node.js">
+  <img src="https://raw.github.com/node-kapacitor/node-kapacitor/master/logo.png?v3" alt="node-kapacitor, a Kapacitor client for Node.js">
 </p>
+
+node-kapacitor is a Kapacitor client for Node.js.
 
 ## Installation
 

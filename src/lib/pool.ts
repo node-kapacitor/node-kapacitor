@@ -9,7 +9,7 @@ import * as urlModule from 'url';
 
 /**
  * Status codes that will cause a host to be marked as 'failed' if we get
- * them from a request to Influx.
+ * them from a request to Kapacitor.
  * @type {Array}
  */
 const resubmitErrorCodes = [
@@ -155,7 +155,7 @@ const request = (
 
 /**
  *
- * The Pool maintains a list available Influx hosts and dispatches requests
+ * The Pool maintains a list available Kapacitor hosts and dispatches requests
  * to them. If there are errors connecting to hosts, it will disable that
  * host for a period of time.
  */
@@ -276,7 +276,7 @@ export class Pool {
   }
 
   /**
-   * Ping sends out a request to all available Influx servers, reporting on
+   * Ping sends out a request to all available Kapacitor servers, reporting on
    * their response time and version number.
    */
   public ping(timeout: number, path: string = '/kapacitor/v1/ping'): Promise<IPingStats[]> {
@@ -384,7 +384,6 @@ export class Pool {
 
     // Support older Nodes and polyfills which don't allow .timeout() in the
     // request options, wrapped in a conditional for even worse polyfills. See:
-    // https://github.com/node-influx/node-influx/issues/221
     if (typeof req.setTimeout === 'function') {
       req.setTimeout(this.timeout); // tslint:disable-line
     }
