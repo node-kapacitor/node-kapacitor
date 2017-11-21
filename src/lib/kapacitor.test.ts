@@ -75,7 +75,7 @@ const testCreateTemplate = async () => {
       var window = 5m
       // The slack channel for alerts
       var slack_channel = '#alerts'
-      
+
       stream
           |from()
               .measurement(measurement)
@@ -113,7 +113,12 @@ const testGetTemplate = async () => {
 const testUpdateTemplate = async () => {
   const tmpl: IUpdateTemplate = {
     id: 'test_template',
-    status: 'enabled'
+    vars: {
+      var1: {
+        value: 42,
+        type: 'float'
+      }
+    }
   };
   const res = await kapacitor.updateTemplate(tmpl);
   console.log(res.modified);
@@ -161,7 +166,7 @@ const testUpdateConfig = async () => {
     }
   };
   await kapacitor.updateConfig(action, 'influxdb', 'default');
-  
+
   influxdb = await kapacitor.getConfig('influxdb', 'default');
   const disableSubscriptions2 = influxdb['options']['disable-subscriptions'];
   console.log('disable-disableSubscriptions2: ', disableSubscriptions2);
@@ -174,13 +179,13 @@ describe('test kapacitor', () => {
   it('should update task', testUpdateTask);
   it('should remove task', testRemoveTask);
   it('should get all task', testGetTasks);
-  
+
   it('should create template', testCreateTemplate);
   it('should get template', testGetTemplate);
   it('should update template', testUpdateTemplate);
   it('should remove template', testRemoveTemplate);
   it('should get all template', testGetTemplates);
-  
+
   it('should test ping', testPing);
 
   it('should get config', testGetConfig);

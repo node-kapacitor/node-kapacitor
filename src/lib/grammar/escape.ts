@@ -5,8 +5,8 @@
  *
  * @example
  * ```typescript
- * 
- * console.log(escape.quoted('stream\n    |from()\n        .measurement("tick")\n')); 
+ *
+ * console.log(escape.quoted('stream\n    |from()\n        .measurement("tick")\n'));
  * // => 'stream\n    |from()\n        .measurement('tick')\n'
  * ```
  */
@@ -23,11 +23,11 @@ export const dashToCamel = (obj: any) => {
   return JSON.parse(str.toLowerCase().replace(
     /-(.)/g, (match: string, group: string) => group.toUpperCase()
   ));
-}  
+}
 
 export const camelToDash = (obj: any) => {
   const str = JSON.stringify(obj);
-  
+
   return JSON.parse(str
     .replace(/(^[A-Z])/, (first: string) => first.toLowerCase())
     .replace(/([A-Z])/g, (letter: string) => `-${letter.toLowerCase()}`)

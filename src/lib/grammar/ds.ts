@@ -3,8 +3,8 @@
  */
 export enum TemplateFields {
   /**
-   * When creating resources in Kapacitor the API server will 
-   * return a `link` object with an `href` of the resource. 
+   * When creating resources in Kapacitor the API server will
+   * return a `link` object with an `href` of the resource.
    * Clients should not need to perform path manipulation in
    * most cases and can use the `link` provided from previous calls.
    */
@@ -22,9 +22,9 @@ export enum TemplateFields {
    */
   script = 'script',
   /**
-   * [GraphViz](https://en.wikipedia.org/wiki/Graphviz) DOT 
+   * [GraphViz](https://en.wikipedia.org/wiki/Graphviz) DOT
    * syntax formatted representation of the template DAG.</br>
-   * NOTE: lables vs attributes does not matter since a 
+   * NOTE: lables vs attributes does not matter since a
    * template is never executing.
    */
   dot = 'dot',
@@ -51,8 +51,8 @@ export enum TemplateFields {
  */
 export enum TaskFields {
   /**
-   * When creating resources in Kapacitor the API server will 
-   * return a `link` object with an `href` of the resource. 
+   * When creating resources in Kapacitor the API server will
+   * return a `link` object with an `href` of the resource.
    * Clients should not need to perform path manipulation in
    * most cases and can use the `link` provided from previous calls.
    */
@@ -62,8 +62,8 @@ export enum TaskFields {
    */
   id = 'id',
   /**
-   * An optional ID of a template to use instead of specifying a TICKscript 
-   * and type directly.
+   * An optional ID of a template to use instead of specifying a TICKscript
+   *  and type directly.
    */
   templateId = 'template-id',
   /**
@@ -73,20 +73,20 @@ export enum TaskFields {
   /**
    * List of database retention policy pairs the task is allowed to access.
    */
-	dbrps = 'dbrps',
+  dbrps = 'dbrps',
   /**
    * The content of the script.
    */
   script = 'script',
   /**
-   * [GraphViz](https://en.wikipedia.org/wiki/Graphviz) DOT 
-   * syntax formatted representation of the task DAG.
+   * [GraphViz](https://en.wikipedia.org/wiki/Graphviz) DOT
+   *  syntax formatted representation of the task DAG.
    */
   dot = 'dot',
   /**
    * One of `enabled` or `disabled`.
    */
-	status = 'status',
+  status = 'status',
   /**
    * Whether the task is currently executing.
    */
@@ -98,7 +98,7 @@ export enum TaskFields {
   /**
    * Map of statistics about a task.
    */
-	stats = 'stats',
+  stats = 'stats',
   /**
    * Date the template was first created
    */
@@ -110,52 +110,52 @@ export enum TaskFields {
   /**
    * Date the task was last set to status `enabled`
    */
-	lastEnabled = 'last-enabled',
+  lastEnabled = 'last-enabled',
   /**
    * A set of vars for overwriting any defined vars in the TICKscript.
    */
-	vars = 'vars',
+  vars = 'vars',
 }
 
 export interface ITemplate {
   /**
-   * a link object with an href of the resource.Clients should not need to 
-   * perform path manipulation in most cases and can use the links provided 
-   * from previous calls.
+   * a link object with an href of the resource.Clients should not need to
+   *  perform path manipulation in most cases and can use the links provided
+   *  from previous calls.
    */
   readonly link?: {
     readonly ref: 'self';
     readonly herf: string;
   };
-  
+
   /**
    * Unique identifier for the template. If empty a random ID will be chosen.
    */
   id?: string;
-  
+
   /**
    * The template type: `stream` or `batch`.
    */
   type?: 'stream'|'batch';
-  
+
   /**
    * The content of the script.
    */
   script?: string;
-  
+
   /**
    * A set of vars for overwriting any defined vars in the TICKscript.
    */
   vars?: {[Attr: string]: any};
-  
+
   /**
-   * [GraphViz](https://en.wikipedia.org/wiki/Graphviz) DOT 
-   * syntax formatted representation of the template DAG.</br>
-   * NOTE: lables vs attributes does not matter since a 
-   * template is never executing.
+   * [GraphViz](https://en.wikipedia.org/wiki/Graphviz) DOT
+   *  syntax formatted representation of the template DAG.</br>
+   * NOTE: lables vs attributes does not matter since a
+   *  template is never executing.
    */
   readonly dot?: string;
-  
+
   /**
    * Any error encountered when reading the template.
    */
@@ -165,50 +165,50 @@ export interface ITemplate {
    * Date the template was first created.
    */
   readonly created?: Date | string | number;
-  
+
   /**
    * Date the template was last modified.
    */
   readonly modified?: Date | string | number;
 }
 
-export interface IUpdateTemplate extends ITask {
+export interface IUpdateTemplate extends ITemplate {
   id: string;
 }
 
 export interface ITask {
 
   /**
-   * a link object with an href of the resource.Clients should not need to 
-   * perform path manipulation in most cases and can use the links provided 
-   * from previous calls.
+   * a link object with an href of the resource.Clients should not need to
+   *  perform path manipulation in most cases and can use the links provided
+   *  from previous calls.
    */
   readonly link?: {
     readonly ref: 'self';
     readonly herf: string;
   };
-  
+
   /**
    * Unique identifier for the task. If empty a random ID will be chosen.
    */
   id?: string;
-  
+
   /**
-   * An optional ID of a template to use instead of specifying a TICKscript 
-   * and type directly.
+   * An optional ID of a template to use instead of specifying a TICKscript
+   *  and type directly.
    */
   templateId?: string;
-  
+
   /**
    * The task type: `stream` or `batch`.
    */
   type?: 'stream'|'batch';
-  
+
   /**
    * The content of the script.
    */
   script?: string;
-  
+
   /**
    * A set of vars for overwriting any defined vars in the TICKscript.
    */
@@ -218,32 +218,32 @@ export interface ITask {
    * List of database retention policy pairs the task is allowed to access.
    */
   dbrps?: {
-      /**
-       * Retention policy to query from, defaults to the DEFAULT
-       * database policy.
-       */
-      rp?: string;
-    
-      /**
-       * Database under which to query the points. This is required if a default
-       * database is not provided in Influx.
-       */
-      db?: string;
+    /**
+     * Retention policy to query from, defaults to the DEFAULT
+     * database policy.
+     */
+    rp?: string;
+
+    /**
+     * Database under which to query the points. This is required if a default
+     * database is not provided in Influx.
+     */
+    db?: string;
   }[];
 
   /**
    * One of `enabled` or `disabled`.
    */
   status?: 'enabled' | 'disabled';
-  
+
   /**
-   * [GraphViz](https://en.wikipedia.org/wiki/Graphviz) DOT 
-   * syntax formatted representation of the template DAG.</br>
-   * NOTE: lables vs attributes does not matter since a 
-   * template is never executing.
+   * [GraphViz](https://en.wikipedia.org/wiki/Graphviz) DOT
+   *  syntax formatted representation of the template DAG.</br>
+   * NOTE: lables vs attributes does not matter since a
+   *  template is never executing.
    */
   readonly dot?: string;
-  
+
   /**
    * Any error encountered when reading the template.
    */
@@ -253,7 +253,7 @@ export interface ITask {
    * Date the task was first created.
    */
   readonly created?: Date | string | number;
-  
+
   /**
    * Date the task was last modified.
    */
@@ -289,8 +289,8 @@ export interface ITemplates {
 
 export interface ITemplateOptions {
   /**
-   * One of formatted or raw. Raw will return the script identical to 
-   * how it was defined. Formatted will first format the script.
+   * One of formatted or raw. Raw will return the script identical to
+   *  how it was defined. Formatted will first format the script.
    */
   scriptFormat?: 'formatted' | 'raw';
 }
@@ -298,22 +298,22 @@ export interface ITemplateOptions {
 export interface IListTemplatesOptions extends ITemplateOptions {
   /**
    * Filter results based on the pattern.
-   * Uses standard shell glob matching, 
+   * Uses standard shell glob matching,
    * see this@see <https://golang.org/pkg/path/filepath/#Match> for more details.
    */
   pattern?: string;
 
   /**
-   * List of fields to return. If empty returns all fields. 
+   * List of fields to return. If empty returns all fields.
    * Fields id and link are always returned.
    */
   fields?: TaskFields[];
-  
+
   /**
    * Offset count for paginating through tasks.
    */
   offset?: number;
-  
+
   /**
    * Maximum number of tasks to return.
    */
@@ -323,14 +323,14 @@ export interface IListTemplatesOptions extends ITemplateOptions {
 
 export interface ITaskOptions extends ITemplateOptions {
   /**
-   * One of labels or attributes. Labels is less readable but will 
-   * correctly render with all the information contained in labels.
+   * One of labels or attributes. Labels is less readable but will
+   *  correctly render with all the information contained in labels.
    */
   dotView?: 'labels' | 'attributes';
 
   /**
-   * Optional ID of a running replay.The returned task information 
-   * will be in the context of the task for the running replay.
+   * Optional ID of a running replay.The returned task information
+   *  will be in the context of the task for the running replay.
    */
   replayId?: string;
 }
@@ -338,22 +338,22 @@ export interface ITaskOptions extends ITemplateOptions {
 export interface IListTasksOptions extends ITaskOptions {
   /**
    * Filter results based on the pattern.
-   * Uses standard shell glob matching, 
+   * Uses standard shell glob matching,
    * see this@see <https://golang.org/pkg/path/filepath/#Match> for more details.
    */
   pattern?: string;
 
   /**
-   * List of fields to return. If empty returns all fields. 
+   * List of fields to return. If empty returns all fields.
    * Fields id and link are always returned.
    */
   fields?: TaskFields[];
-  
+
   /**
    * Offset count for paginating through tasks.
    */
   offset?: number;
-  
+
   /**
    * Maximum number of tasks to return.
    */

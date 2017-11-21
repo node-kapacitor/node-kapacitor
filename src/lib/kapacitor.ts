@@ -111,22 +111,22 @@ function defaults<T>(target: any, ...srcs: any[]): T {
 }
 
 /**
- * Kapacitor is an open source framework for processing, monitoring, 
- * and alerting on time series data.</br>
+ * Kapacitor is an open source framework for processing, monitoring,
+ *  and alerting on time series data.</br>
  * This is a 'driver-level' module, not a a full-fleged ORM or ODM.</br>
  * you run queries directly by calling methods on this class.
  * @example
  * ```typescript
- * 
+ *
  * import { Kapacitor } from 'kapacitor';
  * const kapacitor = new Kapacitor({
  *  host: 'localhost'
  * })
  *
  * kapacitor.getTasks().then(res => {
- * console.log(JSON.stringify(res, null, 2));
+ *  console.log(JSON.stringify(res, null, 2));
  * })
- * ``` 
+ * ```
  */
 export class Kapacitor {
 
@@ -140,43 +140,25 @@ export class Kapacitor {
    * Config options for Kapacitor.
    * @private
    */
-  private options: IClusterConfig;
+  private options: string | ISingleHostConfig | IClusterConfig;
 
   /**
    * Connect to a single Kapacitor instance by specifying
    * a set of connection options.
-   */
-  constructor(options: ISingleHostConfig);
-
-  /**
-   * Connect to an Kapacitor cluster by specifying a
-   * set of connection options.
-   */
-  constructor(options: IClusterConfig);
-
-  /**
-   * Connect to an Kapacitor instance using a configuration URL.
-   * @example
-   * ```typescript
-   * 
-   * new Kapacitor('http://user:password@host:9092/')
-   * ```
-   */
-  constructor(url: string);
-
-  /**
-   * Connects to a local, default kapacitor instance.
-   */
-  constructor();
-
-  /**
-   * Connect to a single Kapacitor instance by specifying
-   * a set of connection options.
-   * @param {IClusterConfig|ISingleHostConfig|string} [options='http://root:root@127.0.0.1:9092']
+   * @param {string | ISingleHostConfig | IClusterConfig} [options='http://root:root@127.0.0.1:9092']
    *
    * @example
    * ```typescript
-   * 
+   *
+   * import { Kapacitor } from 'kapacitor';
+   *
+   * // Connects to a local, default kapacitor instance.
+   * new Kapacitor()
+   * ```
+   *
+   * @example
+   * ```typescript
+   *
    * import { Kapacitor } from 'kapacitor';
    *
    * // Connect to a single host with a DSN:
@@ -185,7 +167,7 @@ export class Kapacitor {
    *
    * @example
    * ```typescript
-   * 
+   *
    * import { Kapacitor } from 'kapacitor';
    *
    * // Connect to a single host with a full set of config details
@@ -197,7 +179,7 @@ export class Kapacitor {
    *
    * @example
    * ```typescript
-   * 
+   *
    * import { Kapacitor } from 'kapacitor';
    *
    * // Use a pool of several host connections and balance queries across them:
@@ -209,7 +191,7 @@ export class Kapacitor {
    * })
    * ```
    */
-  constructor (options?: any) {
+  constructor (options?: string | ISingleHostConfig | IClusterConfig) {
     // Figure out how to parse whatever we were passed in into a IClusterConfig.
     if (typeof options === 'string') { // plain URI => ISingleHostConfig
       options = parseOptionsUrl(options);
@@ -217,7 +199,7 @@ export class Kapacitor {
       options = defaultHost;
     }
     if (!options.hasOwnProperty('hosts')) { // ISingleHostConfig => IClusterConfig
-      options = {
+      options = <IClusterConfig>{
         hosts: [options],
         pool: options.pool
       };
@@ -232,7 +214,7 @@ export class Kapacitor {
         options: host.options,
       }, defaultHost);
     });
-    
+
     this.pool = new Pool(resolved.pool);
     this.options = defaults(resolved, { hosts: [] });
 
@@ -240,14 +222,14 @@ export class Kapacitor {
       this.pool.addHost(`${host.protocol}://${host.host}:${host.port}`, host.options);
     });
   }
-  
+
   /**
    * Pings all available hosts, collecting online status and version info.
    * @param  {Number} timeout Given in milliseconds
    * @return {Promise<IPingStats[]>}
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.ping(5000).then(hosts => {
    *   hosts.forEach(host => {
    *     if (host.online) {
@@ -261,7 +243,7 @@ export class Kapacitor {
    */
   public ping(timeout: number): Promise<IPingStats[]> {
     return this.pool.ping(timeout);
-  }  
+  }
 
   /**
    * Creates a new task.
@@ -269,7 +251,7 @@ export class Kapacitor {
    * @return {Promise.<ITask>}
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.createTask({
    *   id: 'test_kapa',
    *   type: 'stream',
@@ -288,21 +270,21 @@ export class Kapacitor {
     if (task.script) {
       task.script = escape.quoted(task.script);
     }
-    
+
     return this.pool.json(this.getRequestOpts({
       method: 'POST',
       path: 'tasks',
       body: JSON.stringify(task)
     })).then(assertNoErrors);
   }
-  
+
   /**
    * Creates a new template.
    * @param {ITemplate} template
    * @return {Promise.<ITemplate>}
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.createTemplate({
    *   id: 'test_kapa',
    *   type: 'stream',
@@ -324,7 +306,7 @@ export class Kapacitor {
    *     var window = 5m
    *     // The slack channel for alerts
    *     var slack_channel = '#alerts'
-   *     
+   *
    *     stream
    *         |from()
    *             .measurement(measurement)
@@ -350,10 +332,10 @@ export class Kapacitor {
    * ```
    */
   public createTemplate(template: ITemplate): Promise<ITemplate> {
-    if (template.script) { 
+    if (template.script) {
       template.script = escape.quoted(template.script);
     }
-    
+
     return this.pool.json(this.getRequestOpts({
       method: 'POST',
       path: 'templates',
@@ -367,7 +349,7 @@ export class Kapacitor {
    * @return {Promise.<ITask>}
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.updateTask({
    *   id: 'test_kapa',
    *   status: 'enabled'
@@ -375,53 +357,58 @@ export class Kapacitor {
    * ```
    */
   public updateTask(task: IUpdateTask): Promise<ITask> {
-    if (task.script) { 
+    if (task.script) {
       task.script = escape.quoted(task.script);
     }
     const taskId = task.id;
     delete task.id;
-    
+
     return this.pool.json(this.getRequestOpts({
       method: 'PATCH',
       path: 'tasks/' + taskId,
       body: JSON.stringify(task)
     })).then(assertNoErrors);
   }
-  
+
   /**
    * Update a template with the provided template id.
    * @param {ITemplate} template
    * @return {Promise.<ITemplate>}
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.updateTemplate({
    *   id: 'test_template',
-   *   status: 'enabled'
+   *   vars: {
+   *     var1: {
+   *       value: 42,
+   *       type: 'float'
+   *     }
+   *   }
    * });
    * ```
    */
   public updateTemplate(template: ITemplate): Promise<ITemplate> {
-    if (template.script) { 
+    if (template.script) {
       template.script = escape.quoted(template.script);
     }
     const templateId = template.id;
     delete template.id;
-    
+
     return this.pool.json(this.getRequestOpts({
       method: 'PATCH',
       path: 'templates/' + templateId,
       body: JSON.stringify(template)
     })).then(assertNoErrors);
   }
-  
+
   /**
    * remove a task with the provided task id.
    * @param {string} taskId
    * @return {Promise.<void>}
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.removeTask('test_kapa');
    * ```
    */
@@ -432,14 +419,14 @@ export class Kapacitor {
     }));
     assertNoErrors(res);
   }
-  
+
   /**
    * remove a template with the provided template id.
    * @param {string} templateId
    * @return {Promise.<void>}
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.removeTemplate('test_template');
    * ```
    */
@@ -450,7 +437,7 @@ export class Kapacitor {
     }));
     assertNoErrors(res);
   }
-  
+
   /**
    * Return a task.
    * returns the results in a friendly format, {@link ITask}.
@@ -459,7 +446,7 @@ export class Kapacitor {
    * @return {Promise<ITask>} result
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.getTask(taskId, {dotView: 'labels'}).then(results => {
    *   console.log(results)
    * })
@@ -475,7 +462,7 @@ export class Kapacitor {
       query: query ? camelToDash(query) : undefined
     })).then(assertNoErrors);
   }
-  
+
   /**
    * Return a template.
    * returns the results in a friendly format, {@link ITemplate}.
@@ -484,7 +471,7 @@ export class Kapacitor {
    * @return {Promise<ITemplate]>} result(s)
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.getTemplate(tmplId, {scriptFormat: 'raw'}).then(results => {
    *   console.log(results)
    * })
@@ -499,7 +486,7 @@ export class Kapacitor {
       query: query ? camelToDash(query) : undefined
     })).then(assertNoErrors);
   }
-  
+
   /**
    * Return a array of tasks.
    * returns the results in a friendly format, {@link ITasks}.
@@ -507,7 +494,7 @@ export class Kapacitor {
    * @return {Promise<ITasks>} result(s)
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.getTasks({dotView: 'labels'}).then(results => {
    *   console.log(results)
    * })
@@ -525,7 +512,7 @@ export class Kapacitor {
       query: query ? camelToDash(query) : undefined
     })).then(assertNoErrors);
   }
-  
+
   /**
    * Return a array of template.
    * returns the results in a friendly format, {@link ITemplates}.
@@ -533,7 +520,7 @@ export class Kapacitor {
    * @return {Promise<ITemplates>} result(s)
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.getTemplates({dotView: 'labels'}).then(results => {
    *   console.log(results)
    * })
@@ -550,7 +537,7 @@ export class Kapacitor {
       query: query ? camelToDash(query) : undefined
     })).then(assertNoErrors);
   }
-  
+
   /**
    * Update config.
    * @param {ConfigUpdateAction} action
@@ -559,7 +546,7 @@ export class Kapacitor {
    * @return {Promise.<void>}
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.updateConfig({
    *  set: {
    *    'disable-subscriptions' : !disableSubscriptions
@@ -581,7 +568,7 @@ export class Kapacitor {
    * @return {Promise<any>} result
    * @example
    * ```typescript
-   * 
+   *
    * kapacitor.getConfig('influxdb', 'default').then(results => {
    *   console.log(results)
    * })
@@ -606,7 +593,7 @@ export class Kapacitor {
   }): any {
     return Object.assign({
       method: 'GET'
-    }, opt ,{
+    }, opt, {
       path: url.resolve('/kapacitor/v1/', opt.path)
     });
   }
