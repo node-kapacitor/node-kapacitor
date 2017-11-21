@@ -4,7 +4,7 @@ import * as url from 'url';
 import { ITask, IUpdateTask, ITaskOptions, ITasks, ITemplate, escape, camelToDash } from './grammar';
 import { IListTasksOptions, ITemplateOptions, IListTemplatesOptions, ITemplates } from './grammar';
 import { IPingStats, IPoolOptions, Pool } from './pool';
-import { assertNoErrors} from './results';
+import { assertNoErrors, RequestError} from './results';
 
 const defaultHost: IHostConfig = Object.freeze({
   host: '127.0.0.1',
@@ -282,13 +282,13 @@ export class Kapacitor {
    * Creates a new template.
    * @param {ITemplate} template
    * @return {Promise.<ITemplate>}
+   * @throws no template exists
    * @example
    * ```typescript
    *
    * kapacitor.createTemplate({
-   *   id: 'test_kapa',
+   *   id: 'test_template',
    *   type: 'stream',
-   *   dbrps: [{ db: 'test', rp: 'autogen' }],
    *   script: `
    *     // Which measurement to consume
    *     var measurement string
@@ -444,6 +444,7 @@ export class Kapacitor {
    * @param {String} taskId the task id.
    * @param {ITaskOptions} [query]
    * @return {Promise<ITask>} result
+   * @throws {@link RequestError}
    * @example
    * ```typescript
    *
@@ -469,6 +470,7 @@ export class Kapacitor {
    * @param {String} templateId the template id.
    * @param {ITemplateOptions} [query]
    * @return {Promise<ITemplate]>} result(s)
+   * @throws {@link RequestError}
    * @example
    * ```typescript
    *
@@ -484,7 +486,7 @@ export class Kapacitor {
     return this.pool.json(this.getRequestOpts({
       path: 'templates/' + templateId,
       query: query ? camelToDash(query) : undefined
-    })).then(assertNoErrors);
+    }));
   }
 
   /**

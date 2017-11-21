@@ -1,6 +1,7 @@
 import { IBackoffStrategy } from './backoff/backoff';
 import { ExponentialBackoff } from './backoff/exponential';
 import { Host } from './host';
+import { RequestError, ServiceNotAvailableError } from './results';
 
 import * as http from 'http';
 import * as https from 'https';
@@ -70,41 +71,6 @@ export interface IPoolRequestOptions {
    */
   retries?: number;
 
-}
-
-/**
- * An ServiceNotAvailableError is returned as an error from requests that
- * result in a > 500 error code.
- */
-class ServiceNotAvailableError extends Error {
-  constructor(message: string) {
-    super();
-    this.message = message;
-    Object.setPrototypeOf(this, ServiceNotAvailableError.prototype);
-  }
-}
-
-/**
- * An RequestError is returned as an error from requests that
- * result in a 300 <= error code <= 500.
- */
-class RequestError extends Error {
-
-  public static Create(
-    req: http.ClientRequest,
-    res: http.IncomingMessage,
-    callback: (e: RequestError) => void,
-  ) {
-      let body = '';
-      res.on('data', str => body = body + str.toString());
-      res.on('end', () => callback(new RequestError(req, res, body)));
-  }
-
-  constructor(public req: http.ClientRequest, public res: http.IncomingMessage, body: string) {
-    super();
-    this.message = `A ${res.statusCode} ${res.statusMessage} error occurred: ${body}`;
-    Object.setPrototypeOf(this, RequestError.prototype);
-  }
 }
 
 /**

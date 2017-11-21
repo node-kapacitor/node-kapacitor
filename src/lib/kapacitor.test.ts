@@ -1,7 +1,9 @@
 import * as assert from 'power-assert';
 import { Kapacitor, ITask, IUpdateTask, ITemplate, IUpdateTemplate, IPingStats, ConfigUpdateAction } from './kapacitor';
 
-const kapacitor = new Kapacitor();
+const kapacitor = new Kapacitor({
+  host: '192.168.99.100'
+});
 
 const testCreateTask = async () => {
   const task: ITask = {
@@ -110,6 +112,18 @@ const testGetTemplate = async () => {
   console.log(res.dot);
 };
 
+const testGetNoExistsTemplate = async () => {
+  const tmplId = 'test_template22';
+  try {
+    let res = await kapacitor.getTemplate(tmplId);
+    assert(res.id === tmplId);
+    res = await kapacitor.getTemplate(tmplId, {scriptFormat: 'raw'})
+    console.log(res.dot);
+  } catch (e) {
+    assert(e.message === 'no template exists');
+  }
+};
+
 const testUpdateTemplate = async () => {
   const tmpl: IUpdateTemplate = {
     id: 'test_template',
@@ -182,6 +196,7 @@ describe('test kapacitor', () => {
 
   it('should create template', testCreateTemplate);
   it('should get template', testGetTemplate);
+  it('should test get no exists template', testGetNoExistsTemplate);
   it('should update template', testUpdateTemplate);
   it('should remove template', testRemoveTemplate);
   it('should get all template', testGetTemplates);
