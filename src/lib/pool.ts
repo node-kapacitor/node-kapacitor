@@ -111,7 +111,7 @@ class RequestError extends Error {
  * Creates a function generation that returns a wrapper which only allows
  * through the first call of any function that it generated.
  */
-function doOnce(): (<T>(arg: any) => (<T>(arg: T) => any)) {
+function doOnce(): (<T>(arg: any) => ((arg: T) => any)) {
   let handled = false;
 
   return fn => {
@@ -270,7 +270,7 @@ export class Pool {
         if (res) {
           res.on('data', () => { /* ignore */ });
           res.on('end', () => resolve());
-        }  
+        }
       });
     });
   }
