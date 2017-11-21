@@ -486,7 +486,7 @@ export class Kapacitor {
     return this.pool.json(this.getRequestOpts({
       path: 'templates/' + templateId,
       query: query ? camelToDash(query) : undefined
-    }));
+    })).then(assertNoErrors);
   }
 
   /**
