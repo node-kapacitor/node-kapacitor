@@ -1,7 +1,7 @@
 import { RequestOptions } from 'https';
 import * as url from 'url';
 
-import { ITask, IUpdateTask, ITaskOptions, ITasks, ITemplate, escape, camelToDash } from './grammar';
+import { ITask, IUpdateTask, ITaskOptions, ITasks, ITemplate, escape, camelToDash, formatAttrName } from './grammar';
 import { IListTasksOptions, ITemplateOptions, IListTemplatesOptions, ITemplates } from './grammar';
 import { IPingStats, IPoolOptions, Pool } from './pool';
 import { assertNoErrors, RequestError} from './results';
@@ -274,7 +274,7 @@ export class Kapacitor {
     return this.pool.json(this.getRequestOpts({
       method: 'POST',
       path: 'tasks',
-      body: JSON.stringify(task)
+      body: JSON.stringify(formatAttrName(task))
     })).then(assertNoErrors);
   }
 
@@ -339,7 +339,7 @@ export class Kapacitor {
     return this.pool.json(this.getRequestOpts({
       method: 'POST',
       path: 'templates',
-      body: JSON.stringify(template)
+      body: JSON.stringify(formatAttrName(template))
     })).then(assertNoErrors);
   }
 
@@ -366,7 +366,7 @@ export class Kapacitor {
     return this.pool.json(this.getRequestOpts({
       method: 'PATCH',
       path: 'tasks/' + taskId,
-      body: JSON.stringify(task)
+      body: JSON.stringify(formatAttrName(task))
     })).then(assertNoErrors);
   }
 
@@ -398,7 +398,7 @@ export class Kapacitor {
     return this.pool.json(this.getRequestOpts({
       method: 'PATCH',
       path: 'templates/' + templateId,
-      body: JSON.stringify(template)
+      body: JSON.stringify(formatAttrName(template))
     })).then(assertNoErrors);
   }
 
@@ -464,7 +464,7 @@ export class Kapacitor {
     }
     return this.pool.json(this.getRequestOpts({
       path: 'tasks/' + taskId,
-      query: query ? camelToDash(query) : undefined
+      query: query ? camelToDash(query, true) : undefined
     })).then(assertNoErrors);
   }
 
