@@ -1,7 +1,7 @@
 import * as http from 'http';
 
 /**
- * A ResultError is thrown when a query generates errorful results from Influx.
+ * A ResultError is thrown when a query generates errorful results from Kapacitor.
  */
 export class ResultError extends Error {
   constructor(message: string) {
