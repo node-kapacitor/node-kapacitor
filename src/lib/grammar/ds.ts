@@ -1,4 +1,19 @@
 /**
+ * VarType is an enumeration of TICKscript var types.
+ */
+export enum VarType {
+  Bool = 'bool',
+  Int = 'int',
+  Float = 'float',
+  String = 'string',
+  Regex = 'regex',
+  Duration = 'duration',
+  Lambda = 'lambda',
+  List = 'list',
+  Star = 'star'
+}
+
+/**
  * TemplateFields is an enumeration of kapacitor template fields.
  */
 export enum TemplateFields {
@@ -117,6 +132,19 @@ export enum TaskFields {
   vars = 'vars',
 }
 
+/**
+ * A set of vars for overwriting any defined vars in the TICKscript.
+ */
+export interface IVars {
+  [Attr: string]: IVar
+}
+
+export interface IVar {
+  value: any,
+  type: VarType,
+  description?: string
+}
+
 export interface ITemplate {
   /**
    * a link object with an href of the resource.Clients should not need to
@@ -144,9 +172,37 @@ export interface ITemplate {
   script?: string;
 
   /**
-   * A set of vars for overwriting any defined vars in the TICKscript.
+   * A set of vars for overwriting any defined vars in the TICKscript.</br></br>
+   * The vars object has the form:
+   *
+   * ```json
+   * {
+   *     "field_name" : {
+   *         "value": <VALUE>,
+   *         "type": <TYPE>
+   *     },
+   *     "another_field" : {
+   *         "value": <VALUE>,
+   *         "type": <TYPE>
+   *     }
+   * }
+   * ```
+   *
+   * The following is a table of valid types and example values.
+   *
+   * | VarType     | Example Value       | Description    |
+   * | ----     | -------------       | -----------      |
+   * | Bool     | true                | "true" or "false"|
+   * | Int      | 42                  | Any integer value|
+   * | Float    | 2.5 or 67           | Any numeric value|
+   * | Duration | "1s" or 1000000000  | Any integer value interpretted in nanoseconds or an influxql duration string |
+   * | String   | "a string"  | Any string value  |
+   * | Regex    | "^abc.*xyz" | Any string value that represents a valid Go regular expression https://golang.org/pkg/regexp/|
+   * | Lambda   | "\"value\" > 5" | Any string that is a valid TICKscript lambda expression |
+   * | Star     | ""  | No value is required, a star type var represents the literal `*` in TICKscript (i.e. `.groupBy(*)`)     |
+   * | List     | [{"type": TYPE, "value": VALUE}] | A list of var objects. Currently lists may only contain string or star vars|
    */
-  vars?: {[Attr: string]: any};
+  vars?: IVars;
 
   /**
    * [GraphViz](https://en.wikipedia.org/wiki/Graphviz) DOT
@@ -210,9 +266,37 @@ export interface ITask {
   script?: string;
 
   /**
-   * A set of vars for overwriting any defined vars in the TICKscript.
+   * A set of vars for overwriting any defined vars in the TICKscript.</br></br>
+   * The vars object has the form:
+   *
+   * ```json
+   * {
+   *     "field_name" : {
+   *         "value": <VALUE>,
+   *         "type": <TYPE>
+   *     },
+   *     "another_field" : {
+   *         "value": <VALUE>,
+   *         "type": <TYPE>
+   *     }
+   * }
+   * ```
+   *
+   * The following is a table of valid types and example values.
+   *
+   * | Type     | Example Value       | Description    |
+   * | ----     | -------------       | -----------      |
+   * | Bool     | true                | "true" or "false"|
+   * | Int      | 42                  | Any integer value|
+   * | Float    | 2.5 or 67           | Any numeric value|
+   * | Duration | "1s" or 1000000000  | Any integer value interpretted in nanoseconds or an influxql duration string |
+   * | String   | "a string"  | Any string value  |
+   * | Regex    | "^abc.*xyz" | Any string value that represents a valid Go regular expression https://golang.org/pkg/regexp/|
+   * | Lambda   | "\"value\" > 5" | Any string that is a valid TICKscript lambda expression |
+   * | Star     | ""  | No value is required, a star type var represents the literal `*` in TICKscript (i.e. `.groupBy(*)`)     |
+   * | List     | [{"type": TYPE, "value": VALUE}] | A list of var objects. Currently lists may only contain string or star vars|
    */
-  vars?: {[Attr: string]: any};
+  vars?: IVars;
 
   /**
    * List of database retention policy pairs the task is allowed to access.
@@ -233,6 +317,7 @@ export interface ITask {
 
   /**
    * One of `enabled` or `disabled`.
+   * @default disabled
    */
   status?: 'enabled' | 'disabled';
 
@@ -291,6 +376,7 @@ export interface ITemplateOptions {
   /**
    * One of formatted or raw. Raw will return the script identical to
    *  how it was defined. Formatted will first format the script.
+   * @default formatted
    */
   scriptFormat?: 'formatted' | 'raw';
 }
@@ -299,7 +385,7 @@ export interface IListTemplatesOptions extends ITemplateOptions {
   /**
    * Filter results based on the pattern.
    * Uses standard shell glob matching,
-   * see this@see <https://golang.org/pkg/path/filepath/#Match> for more details.
+   * see [this](https://golang.org/pkg/path/filepath/#Match) for more details.
    */
   pattern?: string;
 
@@ -307,15 +393,17 @@ export interface IListTemplatesOptions extends ITemplateOptions {
    * List of fields to return. If empty returns all fields.
    * Fields id and link are always returned.
    */
-  fields?: TaskFields[];
+  fields?: TemplateFields[];
 
   /**
-   * Offset count for paginating through tasks.
+   * Offset count for paginating through templates.
+   * @default 0
    */
   offset?: number;
 
   /**
-   * Maximum number of tasks to return.
+   * Maximum number of templates to return.
+   * @default 100
    */
   limit?: number;
 }
@@ -325,6 +413,7 @@ export interface ITaskOptions extends ITemplateOptions {
   /**
    * One of labels or attributes. Labels is less readable but will
    *  correctly render with all the information contained in labels.
+   * @default attributes
    */
   dotView?: 'labels' | 'attributes';
 
@@ -339,7 +428,7 @@ export interface IListTasksOptions extends ITaskOptions {
   /**
    * Filter results based on the pattern.
    * Uses standard shell glob matching,
-   * see this@see <https://golang.org/pkg/path/filepath/#Match> for more details.
+   * see [this](https://golang.org/pkg/path/filepath/#Match) for more details.
    */
   pattern?: string;
 
@@ -351,11 +440,13 @@ export interface IListTasksOptions extends ITaskOptions {
 
   /**
    * Offset count for paginating through tasks.
+   * @default 0
    */
   offset?: number;
 
   /**
    * Maximum number of tasks to return.
+   * @default 100
    */
   limit?: number;
 }

@@ -1,6 +1,6 @@
 {
   "name": "kapacitor",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Kapacitor Client",
   "repository": {
     "type": "git",

@@ -1,5 +1,5 @@
 import * as assert from 'power-assert';
-import { Kapacitor, ITask, IUpdateTask, ITemplate, IUpdateTemplate, IPingStats, ConfigUpdateAction } from './kapacitor';
+import { Kapacitor, ITask, IUpdateTask, ITemplate, IUpdateTemplate, IPingStats, ConfigUpdateAction, VarType } from './kapacitor';
 
 const kapacitor = new Kapacitor({
   host: '192.168.99.100'
@@ -16,7 +16,7 @@ const testCreateTask = async () => {
     vars: {
       var1: {
         value: 42,
-        type: 'float'
+        type: VarType.Float
       }
     }
   };
@@ -96,7 +96,7 @@ const testCreateTemplate = async () => {
     vars: {
       var1: {
         value: 42,
-        type: 'float'
+        type: VarType.Float
       }
     }
   };
@@ -130,7 +130,7 @@ const testUpdateTemplate = async () => {
     vars: {
       var1: {
         value: 42,
-        type: 'float'
+        type: VarType.Float
       }
     }
   };

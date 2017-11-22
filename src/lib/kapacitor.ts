@@ -260,7 +260,7 @@ export class Kapacitor {
    *   vars: {
    *     var1: {
    *       value: 42,
-   *       type: 'float'
+   *       type: VarType.Float
    *     }
    *   }
    * });
@@ -325,7 +325,7 @@ export class Kapacitor {
    *   vars: {
    *     var1: {
    *       value: 42,
-   *       type: 'float'
+   *       type: VarType.Float
    *     }
    *   }
    * });
@@ -382,7 +382,7 @@ export class Kapacitor {
    *   vars: {
    *     var1: {
    *       value: 42,
-   *       type: 'float'
+   *       type: VarType.Float
    *     }
    *   }
    * });
@@ -445,6 +445,10 @@ export class Kapacitor {
    * @param {ITaskOptions} [query]
    * @return {Promise<ITask>} result
    * @throws {@link RequestError}
+   *
+   * statusCode  | statusMessage  | message
+   * ------------- | ------------- | -------------
+   * 404  | Not Found  | no task exists
    * @example
    * ```typescript
    *
@@ -471,6 +475,10 @@ export class Kapacitor {
    * @param {ITemplateOptions} [query]
    * @return {Promise<ITemplate]>} result(s)
    * @throws {@link RequestError}
+   *
+   * statusCode  | statusMessage  | message
+   * ------------- | ------------- | -------------
+   * 404  | Not Found  | no template exists
    * @example
    * ```typescript
    *
