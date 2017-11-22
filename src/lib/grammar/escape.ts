@@ -25,11 +25,29 @@ export const dashToCamel = (obj: any) => {
   ));
 }
 
-export const camelToDash = (obj: any) => {
-  const str = JSON.stringify(obj);
-
-  return JSON.parse(str
+export const camelToDash = (obj: any, parse: boolean = false) => {
+  let str = '';
+  switch (typeof obj) {
+    case 'object':
+      str = JSON.stringify(obj);
+      break;
+    case 'string':
+      str = obj;
+      break;
+  }
+  const res = str
     .replace(/(^[A-Z])/, (first: string) => first.toLowerCase())
-    .replace(/([A-Z])/g, (letter: string) => `-${letter.toLowerCase()}`)
-  );
+    .replace(/([A-Z])/g, (letter: string) => `-${letter.toLowerCase()}`);
+  return parse ? JSON.parse(res) : res;
+}
+
+export const formatAttrName = (obj: any) => {
+  const keys = Object.keys(obj);
+  keys.forEach((key) => {
+    if (/[A-Z]/.test(key)) {
+      obj[camelToDash(key)] = obj[key];
+      delete obj[key];
+    }
+  });
+  return obj;
 }
