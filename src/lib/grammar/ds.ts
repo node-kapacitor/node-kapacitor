@@ -151,10 +151,7 @@ export interface ITemplate {
    *  perform path manipulation in most cases and can use the links provided
    *  from previous calls.
    */
-  readonly link?: {
-    readonly ref: 'self';
-    readonly herf: string;
-  };
+  readonly link?: ILink;
 
   /**
    * Unique identifier for the template. If empty a random ID will be chosen.
@@ -239,10 +236,7 @@ export interface ITask {
    *  perform path manipulation in most cases and can use the links provided
    *  from previous calls.
    */
-  readonly link?: {
-    readonly ref: 'self';
-    readonly herf: string;
-  };
+  readonly link?: ILink;
 
   /**
    * Unique identifier for the task. If empty a random ID will be chosen.
@@ -408,7 +402,6 @@ export interface IListTemplatesOptions extends ITemplateOptions {
   limit?: number;
 }
 
-
 export interface ITaskOptions extends ITemplateOptions {
   /**
    * One of labels or attributes. Labels is less readable but will
@@ -449,4 +442,57 @@ export interface IListTasksOptions extends ITaskOptions {
    * @default 100
    */
   limit?: number;
+}
+
+export interface ILink {
+  /**
+   * Relation string
+   */
+  rel: 'self',
+  /**
+   *  a reference to the resource
+   */
+  href: string
+}
+
+export interface IConfigElement {
+  /**
+   * a link object with an href of the resource.Clients should not need to
+   *  perform path manipulation in most cases and can use the links provided
+   *  from previous calls.
+   */
+  link: ILink;
+
+  /**
+   * configuration options
+   */
+  options: {[Attr: string]: any};
+
+  /**
+   * All sensitive information will not be returned in the request body.
+   * Instead a boolean value will be in its place indicating whether
+   *  the value is empty or not.A list of which options are redacted
+   *  is returned for each element.
+   */
+  redacted: string[];
+}
+
+export interface IConfigSection {
+  /**
+   * a link object with an href of the resource.Clients should not need to
+   *  perform path manipulation in most cases and can use the links provided
+   *  from previous calls.
+   */
+  link: ILink;
+  elements: IConfigElement[];
+}
+
+export interface IConfigSections {
+  /**
+   * a link object with an href of the resource.Clients should not need to
+   *  perform path manipulation in most cases and can use the links provided
+   *  from previous calls.
+   */
+  link: ILink;
+  sections: IConfigSection[];
 }

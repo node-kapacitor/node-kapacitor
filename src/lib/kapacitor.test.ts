@@ -1,5 +1,7 @@
 import * as assert from 'power-assert';
-import { Kapacitor, ITask, IUpdateTask, ITemplate, IUpdateTemplate, IPingStats, ConfigUpdateAction, VarType } from './kapacitor';
+import { Kapacitor, ITask, IUpdateTask, ITemplate, IUpdateTemplate } from './kapacitor';
+import { IPingStats, ConfigUpdateAction, VarType } from './kapacitor';
+import { IConfigSections, IConfigSection, IConfigElement } from './kapacitor';
 
 const kapacitor = new Kapacitor({
   host: '192.168.99.100'
@@ -171,8 +173,8 @@ const testGetConfig = async () => {
 
 const testUpdateConfig = async () => {
 
-  let influxdb = await kapacitor.getConfig('influxdb', 'default');
-  const disableSubscriptions = influxdb['options']['disable-subscriptions'];
+  let influxdb = <IConfigElement>await kapacitor.getConfig('influxdb', 'default');
+  const disableSubscriptions = influxdb.options['disable-subscriptions'];
   console.log('disable-subscriptions: ', disableSubscriptions);
   const action: ConfigUpdateAction = {
     set: {
@@ -181,8 +183,8 @@ const testUpdateConfig = async () => {
   };
   await kapacitor.updateConfig(action, 'influxdb', 'default');
 
-  influxdb = await kapacitor.getConfig('influxdb', 'default');
-  const disableSubscriptions2 = influxdb['options']['disable-subscriptions'];
+  influxdb = <IConfigElement>await kapacitor.getConfig('influxdb', 'default');
+  const disableSubscriptions2 = influxdb.options['disable-subscriptions'];
   console.log('disable-disableSubscriptions2: ', disableSubscriptions2);
   assert( disableSubscriptions2 === !disableSubscriptions);
 };
