@@ -1,8 +1,10 @@
 import { RequestOptions } from 'https';
 import * as url from 'url';
 
-import { ITask, IUpdateTask, ITaskOptions, ITasks, ITemplate, escape, camelToDash, formatAttrName } from './grammar';
-import { IListTasksOptions, ITemplateOptions, IListTemplatesOptions, ITemplates } from './grammar';
+import { ITask, ITasks, IUpdateTask, ITaskOptions, IListTasksOptions } from './grammar';
+import { ITemplate, ITemplates, ITemplateOptions, IListTemplatesOptions } from './grammar';
+import { escape, camelToDash, formatAttrName } from './grammar';
+import { IConfigSections, IConfigSection, IConfigElement } from './grammar';
 import { IPingStats, IPoolOptions, Pool } from './pool';
 import { assertNoErrors, RequestError} from './results';
 
@@ -575,7 +577,7 @@ export class Kapacitor {
    * Get config.
    * @param {string} [section]
    * @param {string} [element]
-   * @return {Promise<any>} result
+   * @return {Promise<IConfigSections|IConfigSection|IConfigElement>} result
    * @example
    * ```typescript
    *
@@ -584,9 +586,9 @@ export class Kapacitor {
    * })
    * ```
    */
-  public getConfig(section?: string, element?: string): Promise<any> {
+  public getConfig(section?: string, element?: string): Promise<IConfigSections|IConfigSection|IConfigElement> {
     const path = 'config' + (section ? '/' + section : '') + (element ? '/' + element : '')
-    return this.pool.json(this.getRequestOpts({
+    return <Promise<IConfigSections|IConfigSection|IConfigElement>>this.pool.json(this.getRequestOpts({
       path
     })).then(assertNoErrors);
   }
