@@ -320,13 +320,6 @@ export class Pool {
       protocol: host.url.protocol,
       timeout: this.timeout,
     }, host.options), once((res: http.IncomingMessage) => {
-      if (Number(res.statusCode) >= 500) {
-        return this.handleRequestError(
-          new ServiceNotAvailableError(res.statusMessage || ''),
-          host, options, callback,
-        );
-      }
-
       if (Number(res.statusCode) >= 300) {
         return RequestError.Create(req, res, err => callback(err, res));
       }
