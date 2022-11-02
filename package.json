@@ -33,7 +33,7 @@
     "@types/node": "^8.0.53",
     "@types/power-assert": "^1.4.29",
     "config": "^1.28.1",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.2",
     "gulp-typedoc": "^2.0.2",
     "intelli-espower-loader": "^1.0.1",
     "mocha": "^4.0.1",
